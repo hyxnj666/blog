@@ -1,0 +1,40 @@
+---
+description: Tailwind CSS 4 样式开发规范
+globs: src/styles/**/*.css, **/*.astro
+alwaysApply: false
+---
+
+# 样式规范
+
+## Tailwind CSS 4
+
+本项目使用 Tailwind 4 + `@tailwindcss/vite`，和 Tailwind 3 的关键区别:
+
+- 配置写在 `global.css` 的 `@theme {}` 块中，不使用 `tailwind.config.ts`
+- 导入方式: `@import 'tailwindcss';`
+- 自定义颜色: `--color-accent: #22d3ee;`（在 `@theme` 中定义）
+- 使用时: `text-accent`, `bg-accent/10`
+
+## 响应式断点
+
+- 移动优先，用 `md:` 和 `lg:` 向上适配
+- 内容区最大宽度: `max-w-4xl` (列表页) / `max-w-3xl` (文章) / `max-w-6xl` (含侧边栏)
+- 侧边栏 TOC: `hidden lg:block`
+- 移动菜单: `md:hidden` 侧滑抽屉
+
+## 常用样式类
+
+| 类名 | 用途 |
+|------|------|
+| `.glass-card` | 玻璃态卡片 (文章列表、导航卡片) |
+| `.section-panel` | 次级面板 (即将更新区域) |
+| `.prose` | 文章正文排版 |
+| `.glow-text` | 标题发光效果 |
+| `.toc-link` | 目录链接项 |
+| `.reading-progress` | 阅读进度条渐变 |
+
+## 禁止事项
+
+- ❌ 不安装 `@tailwindcss/typography`，prose 样式已手写在 global.css
+- ❌ 不使用 `@apply` 除非在 global.css 定义复用类
+- ❌ 不引入额外 CSS 框架 (Ant Design / Element Plus 等)

@@ -1,0 +1,23 @@
+---
+const year = new Date().getFullYear();
+---
+
+<footer class="relative z-10 border-t border-cyan-500/10 mt-16">
+  <div class="max-w-5xl mx-auto px-4 py-10">
+    <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-slate-500">
+      <div class="flex items-center gap-4">
+        <span>&copy; {year} Conor Liu</span>
+        <span class="hidden md:inline text-slate-700">·</span>
+        <a href="https://resume.conorliu.com" target="_blank" rel="noopener" class="hover:text-accent transition-colors">
+          在线简历
+        </a>
+        <a href="https://github.com/conorliu" target="_blank" rel="noopener" class="hover:text-accent transition-colors">
+          GitHub
+        </a>
+      </div>
+      <div class="text-slate-600">
+        Built with <a href="https://astro.build" target="_blank" rel="noopener" class="hover:text-accent transition-colors">Astro</a>
+      </div>
+    </div>
+  </div>
+</footer>

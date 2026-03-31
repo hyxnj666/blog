@@ -1,0 +1,95 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import TableOfContents from '@/components/TableOfContents.astro';
+import SeriesNav from '@/components/SeriesNav.astro';
+import Comments from '@/components/Comments.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const posts = await getCollection('junior');
+  return posts.map(post => ({
+    params: { slug: post.id },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content, headings } = await render(post);
+
+const allPosts = (await getCollection('junior'))
+  .filter(p => !p.data.draft)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const currentIndex = allPosts.findIndex(p => p.id === post.id);
+const prevPost = currentIndex > 0 ? allPosts[currentIndex - 1] : undefined;
+const nextPost = currentIndex < allPosts.length - 1 ? allPosts[currentIndex + 1] : undefined;
+---
+
+<BaseLayout title={post.data.title} description={post.data.description}>
+  {/* Reading progress bar */}
+  <div id="reading-progress" class="fixed top-14 left-0 h-0.5 reading-progress z-50" style="width: 0%"></div>
+
+  <div class="max-w-6xl mx-auto px-4 py-10">
+    <div class="lg:flex lg:gap-10">
+
+      {/* Main content */}
+      <article class="flex-1 min-w-0 max-w-3xl">
+        <a href="/series/junior" class="inline-flex items-center gap-1 text-sm text-slate-500 hover:text-accent transition-colors mb-6">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"/></svg>
+          前端转 AI 全栈实战
+        </a>
+
+        <header class="mb-8">
+          <div class="flex items-center gap-3 mb-4">
+            <span class="text-xs px-2.5 py-1 rounded-full border bg-cyan-500/10 border-cyan-500/25 text-cyan-300 font-medium">
+              初级 · 第 {String(post.data.order).padStart(2, '0')} 篇
+            </span>
+            {post.data.publishDate && (
+              <time class="text-xs text-slate-500 font-mono">{post.data.publishDate}</time>
+            )}
+          </div>
+          {post.data.tags.length > 0 && (
+            <div class="flex gap-1.5 flex-wrap mb-4">
+              {post.data.tags.map((tag: string) => (
+                <span class="text-xs px-2 py-0.5 rounded-full bg-accent/8 border border-accent/15 text-cyan-300/80">
+                  {tag}
+                </span>
+              ))}
+            </div>
+          )}
+        </header>
+
+        <div class="prose">
+          <Content />
+        </div>
+
+        <SeriesNav
+          prev={prevPost ? { title: prevPost.data.title, href: `/series/junior/${prevPost.id}` } : undefined}
+          next={nextPost ? { title: nextPost.data.title, href: `/series/junior/${nextPost.id}` } : undefined}
+        />
+
+        <Comments />
+      </article>
+
+      {/* Sidebar TOC */}
+      <aside class="hidden lg:block w-64 shrink-0">
+        <div class="sticky top-20">
+          <TableOfContents headings={headings} />
+        </div>
+      </aside>
+
+    </div>
+  </div>
+
+  <script>
+    function updateProgress() {
+      const bar = document.getElementById('reading-progress');
+      if (!bar) return;
+      const scrollHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = scrollHeight > 0 ? (window.scrollY / scrollHeight) * 100 : 0;
+      bar.style.width = `${Math.min(progress, 100)}%`;
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+    updateProgress();
+  </script>
+</BaseLayout>

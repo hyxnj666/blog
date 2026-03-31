@@ -1,0 +1,43 @@
+---
+description: Blog 项目整体技术栈与架构约束，所有开发必须遵守
+alwaysApply: true
+---
+
+# Blog 项目概览
+
+## 技术栈
+
+- **框架**: Astro 6 (静态站点生成，零 JS 默认)
+- **样式**: Tailwind CSS 4 (通过 `@tailwindcss/vite`，不用 `@astrojs/tailwind`)
+- **包管理**: pnpm
+- **代码高亮**: Shiki (Astro 内置，主题 one-dark-pro)
+- **部署目标**: Vercel / Cloudflare Pages (纯静态 output: "static")
+- **评论**: giscus (GitHub Discussions)
+- **站点地图**: @astrojs/sitemap
+
+## 目录结构
+
+```
+src/
+├── content/           # Astro Content Collections
+│   ├── junior/        # 初级专栏文章 (每篇一个文件夹: index.md + cover.png + images/)
+│   └── senior/        # 高级专栏文章 (同上)
+├── content.config.ts  # 内容集合 schema 定义
+├── components/        # .astro 组件 (无框架依赖，纯 Astro)
+├── layouts/           # 页面布局
+├── pages/             # 路由页面
+│   ├── index.astro
+│   ├── about.astro
+│   └── series/
+│       ├── junior/    # [slug].astro 动态路由
+│       └── senior/    # [slug].astro 动态路由
+└── styles/
+    └── global.css     # Tailwind + 全局样式
+```
+
+## 核心约束
+
+- 不引入 React/Vue 等前端框架，全部用 .astro 组件
+- 保持零客户端 JS 原则，仅在必要时使用 `<script>` 标签 (如 TOC 高亮、移动菜单)
+- 设计风格必须与 resume.conorliu.com 一致: 深色主题 (#0a0f1a)、cyan 主色 (#22d3ee)、玻璃态卡片
+- 路径别名使用 `@/` 指向 `src/`

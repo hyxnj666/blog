@@ -1,0 +1,44 @@
+---
+description: 文章内容与 Content Collections 开发规范
+globs: src/content/**/*.md, src/content.config.ts
+alwaysApply: false
+---
+
+# 内容规范
+
+## Frontmatter 必填字段
+
+每篇 `index.md` 必须包含:
+
+```yaml
+---
+title: "文章标题"
+description: "一句话描述"
+order: 1
+cover: "./cover.png"
+publishDate: "2025-06-15"
+tags: ["标签1", "标签2"]
+draft: false
+---
+```
+
+- `title` 含中文引号时用单引号包裹: `title: '从"会用"到"架构"'`
+- `order` 决定系列内排序，必须唯一
+- `draft: true` 的文章不会出现在列表和构建产物中
+
+## 文章内链接
+
+- 文章间链接使用绝对路径: `/series/junior/02-ai-tech-landscape`
+- ❌ 禁止相对路径: `../02-ai-tech-landscape/index.md`
+- 未发布文章的预告用纯文字，不加链接: `下一篇标题（即将发布）`
+
+## 文件夹命名
+
+- 格式: `{序号}-{english-kebab-slug}/`
+- 例: `01-frontend-wont-die/`, `03-ai-gateway/`
+- 每个文件夹包含: `index.md` + `cover.png` + `images/`(可选)
+
+## 图片引用
+
+- 文章内图片放 `images/` 子目录，用相对路径引用: `./images/01-diagram.png`
+- Astro 会自动优化图片为 WebP 格式

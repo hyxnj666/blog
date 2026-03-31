@@ -1,0 +1,52 @@
+---
+interface Props {
+  term?: string;
+}
+
+const { term } = Astro.props;
+---
+
+<section class="mt-12 pt-8 border-t border-slate-700/50" id="comments">
+  <h3 class="text-lg font-semibold text-white mb-4 flex items-center gap-2">
+    <svg class="w-5 h-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z"/>
+    </svg>
+    评论
+  </h3>
+  <div class="giscus-container">
+    <script
+      src="https://giscus.app/client.js"
+      data-repo="hyxnj666/blog"
+      data-repo-id="R_kgDOR1XS_w"
+      data-category="General"
+      data-category-id="DIC_kwDOR1XS_84C5qmi"
+      data-mapping="pathname"
+      data-strict="0"
+      data-reactions-enabled="1"
+      data-emit-metadata="0"
+      data-input-position="top"
+      data-theme="noborder_dark"
+      data-lang="zh-CN"
+      crossorigin="anonymous"
+      async
+    ></script>
+  </div>
+  <noscript>
+    <p class="text-sm text-slate-500 mt-4">
+      评论功能需要 JavaScript 支持。你也可以直接在
+      <a href="https://github.com/hyxnj666/blog/discussions" target="_blank" rel="noopener" class="text-accent hover:underline">
+        GitHub Discussions
+      </a>
+      参与讨论。
+    </p>
+  </noscript>
+</section>
+
+<style>
+  .giscus-container {
+    min-height: 150px;
+  }
+  .giscus-container :global(.giscus) {
+    max-width: 100%;
+  }
+</style>

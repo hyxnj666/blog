@@ -1,0 +1,104 @@
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+import SeriesCard from '@/components/SeriesCard.astro';
+import PostCard from '@/components/PostCard.astro';
+import { getCollection } from 'astro:content';
+
+const juniorPosts = (await getCollection('junior'))
+  .filter(p => !p.data.draft)
+  .sort((a, b) => a.data.order - b.data.order);
+const seniorPosts = (await getCollection('senior'))
+  .filter(p => !p.data.draft)
+  .sort((a, b) => a.data.order - b.data.order);
+
+const allPosts = [
+  ...juniorPosts.map(p => ({ ...p, series: 'junior' as const })),
+  ...seniorPosts.map(p => ({ ...p, series: 'senior' as const })),
+].sort((a, b) => new Date(b.data.publishDate).getTime() - new Date(a.data.publishDate).getTime());
+
+const recentPosts = allPosts.slice(0, 5);
+---
+
+<BaseLayout title="首页" description="Conor Liu 的技术博客 — 前端转 AI 全栈实战，从调 API 到架构设计">
+  <div class="max-w-4xl mx-auto px-4 py-12 md:py-16">
+
+    {/* Hero */}
+    <section class="text-center pb-14 border-b border-cyan-500/20 animate-fade-in">
+      <p class="text-xs font-mono text-accent/90 tracking-[0.3em] uppercase mb-3">
+        Frontend → AI Full-Stack
+      </p>
+      <h1 class="text-4xl md:text-5xl font-bold text-white mb-4 glow-text">
+        Conor's Blog
+      </h1>
+      <p class="text-lg text-slate-400 mb-2">
+        前端转 AI 全栈实战 · 从调 API 到架构设计
+      </p>
+      <p class="text-sm text-accent/70 mb-8">
+        JS/TS + Python 双线并进，每篇都有可运行代码
+      </p>
+      <div class="flex flex-wrap justify-center gap-3">
+        <a href="/series/junior" class="inline-flex items-center gap-2 h-10 px-5 rounded-lg bg-accent text-slate-950 text-sm font-medium shadow-[0_10px_30px_-14px_rgba(34,211,238,0.85)] hover:bg-cyan-300 hover:shadow-[0_14px_34px_-14px_rgba(34,211,238,0.95)] transition-all">
+          开始学习
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+        </a>
+        <a href="https://resume.conorliu.com" target="_blank" rel="noopener" class="inline-flex items-center gap-2 h-10 px-5 rounded-lg border border-cyan-500/40 bg-cyan-500/8 text-cyan-300 text-sm font-medium hover:bg-cyan-500/14 transition-all">
+          关于作者 ↗
+        </a>
+      </div>
+    </section>
+
+    {/* Series */}
+    <section class="py-12 animate-slide-up">
+      <h2 class="text-xl font-bold text-slate-100 mb-6 flex items-center gap-2">
+        <span class="w-1 h-6 bg-accent rounded-full"></span>
+        专栏系列
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <SeriesCard
+          title="前端转 AI 全栈实战"
+          description="从零起步，JS/TS + Python 双语言并进，逐步掌握 AI API、Prompt 工程、流式渲染、Agent 等核心能力"
+          href="/series/junior"
+          articleCount={juniorPosts.length}
+          level="junior"
+        />
+        <SeriesCard
+          title="高级前端的 AI 架构升级之路"
+          description="面向 5 年以上前端，聚焦 AI 网关、状态管理、Streaming 架构、多 Agent 系统、平台化"
+          href="/series/senior"
+          articleCount={seniorPosts.length}
+          level="senior"
+        />
+      </div>
+    </section>
+
+    {/* Recent posts */}
+    <section class="py-12">
+      <h2 class="text-xl font-bold text-slate-100 mb-6 flex items-center gap-2">
+        <span class="w-1 h-6 bg-accent rounded-full"></span>
+        最新文章
+      </h2>
+      <div class="space-y-3">
+        {recentPosts.map(post => (
+          <PostCard
+            title={post.data.title}
+            description={post.data.description}
+            href={`/series/${post.series}/${post.id}`}
+            order={post.data.order}
+            tags={post.data.tags}
+            publishDate={post.data.publishDate}
+          />
+        ))}
+      </div>
+    </section>
+
+    {/* CTA */}
+    <section class="py-12 text-center">
+      <p class="text-slate-400 mb-4">想了解更多关于我的经历和 AI 项目？</p>
+      <a href="https://resume.conorliu.com/ask-ai" target="_blank" rel="noopener" class="inline-flex items-center gap-2 h-11 px-6 rounded-lg bg-accent text-slate-950 text-sm font-medium shadow-[0_10px_30px_-14px_rgba(34,211,238,0.85)] hover:bg-cyan-300 transition-all">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8V4H8"/><rect width="16" height="12" x="4" y="8" rx="2"/><path d="M2 14h2"/><path d="M20 14h2"/><path d="M15 13v2"/><path d="M9 13v2"/></svg>
+        Ask AI about me
+      </a>
+    </section>
+
+  </div>
+</BaseLayout>

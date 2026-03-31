@@ -1,0 +1,32 @@
+---
+interface NavItem {
+  title: string;
+  href: string;
+}
+
+interface Props {
+  prev?: NavItem;
+  next?: NavItem;
+}
+
+const { prev, next } = Astro.props;
+---
+
+<nav class="flex flex-col sm:flex-row gap-3 mt-12 pt-8 border-t border-slate-700/50" aria-label="系列导航">
+  {prev ? (
+    <a href={prev.href} class="glass-card flex-1 p-4 group">
+      <span class="text-xs text-slate-500 mb-1 block">← 上一篇</span>
+      <span class="text-sm text-slate-300 group-hover:text-accent transition-colors font-medium line-clamp-1">
+        {prev.title}
+      </span>
+    </a>
+  ) : <div class="flex-1"></div>}
+  {next ? (
+    <a href={next.href} class="glass-card flex-1 p-4 group text-right">
+      <span class="text-xs text-slate-500 mb-1 block">下一篇 →</span>
+      <span class="text-sm text-slate-300 group-hover:text-accent transition-colors font-medium line-clamp-1">
+        {next.title}
+      </span>
+    </a>
+  ) : <div class="flex-1"></div>}
+</nav>

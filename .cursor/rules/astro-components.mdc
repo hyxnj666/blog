@@ -1,0 +1,60 @@
+---
+description: Astro 组件开发规范
+globs: src/components/**/*.astro, src/layouts/**/*.astro, src/pages/**/*.astro
+alwaysApply: false
+---
+
+# Astro 组件规范
+
+## 组件风格
+
+- 纯 `.astro` 组件，不引入 React/Vue/Svelte
+- Props 使用 TypeScript interface 定义:
+
+```astro
+---
+interface Props {
+  title: string;
+  href: string;
+  count?: number;
+}
+const { title, href, count = 0 } = Astro.props;
+---
+```
+
+## 客户端脚本
+
+- 默认不加 JS，保持静态
+- 必须使用 JS 时用 `<script>` 标签（自动 module 模式），不用 `client:*` 指令
+- 事件监听加 `{ passive: true }` (scroll/touch 场景)
+- DOM 操作用 `getElementById` / `querySelectorAll`，不引入库
+
+## 样式约定
+
+- 优先用 Tailwind 工具类
+- 自定义样式写在 `global.css` 中，用语义化类名: `.glass-card`, `.section-panel`, `.prose`
+- 颜色使用 Tailwind 主题变量: `text-accent`, `bg-dark`, `bg-surface`
+- 不使用 CSS Modules 或 Scoped styles（除非有样式隔离需求）
+
+## 设计 Tokens (和 resume 统一)
+
+| Token | 值 | 用途 |
+|-------|-----|------|
+| `accent` | `#22d3ee` | 主色、链接、高亮 |
+| `accent-dim` | `#06b6d4` | 次要强调 |
+| `dark` | `#0a0f1a` | 页面背景 |
+| `surface` | `#0f172a` | 卡片/面板背景 |
+| `surface-light` | `#1e293b` | 悬浮/激活态背景 |
+
+## 页面模板
+
+新建页面必须使用 BaseLayout:
+
+```astro
+---
+import BaseLayout from '@/layouts/BaseLayout.astro';
+---
+<BaseLayout title="页面标题" description="页面描述">
+  <!-- 内容 -->
+</BaseLayout>
+```
