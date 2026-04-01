@@ -10,7 +10,7 @@ tags: ["SSE", "流式输出", "React", "Vue", "实战"]
 # 流式输出：让 AI 回复像 ChatGPT 一样打字机效果
 
 > 本文是【前端转 AI 全栈实战】系列第 05 篇。
-> 上一篇：[多模型适配：一套代码接 6 家 AI 厂商](/series/junior/04-multi-model-client) | 下一篇：Prompt 工程：前端最容易忽略的核心技能（即将发布）
+> 上一篇：[多模型适配：一套代码接 6 家 AI 厂商](/series/junior/04-multi-model-client) | 下一篇：[Prompt 工程：前端最容易忽略的核心技能](/series/junior/06-prompt-engineering)
 
 ---
 
@@ -556,6 +556,199 @@ async def chat(request: dict):
 
 ---
 
+## 进阶：让流式输出更丝滑——Typewriter Buffer 模式
+
+前面的实现有一个体验问题：**AI 返回 token 的速度是不均匀的**。
+
+有时候网络一下子推过来一大坨 token，屏幕上"哗"地蹦出一大段文字；有时候又卡顿半秒才来下一个 token。这种忽快忽慢的节奏感很差，用户感觉不到"AI 在稳定地打字"。
+
+ChatGPT 的打字效果之所以流畅，不是因为 token 到得均匀，而是因为**前端做了一层缓冲**——把到达的 token 先存起来，然后用固定节奏一个个"喂"给界面。
+
+### 核心思路：生产者-消费者模式
+
+```
+网络层（生产者）→ [Buffer 缓冲区] → 定时器（消费者）→ UI 渲染
+```
+
+- **生产者**：流式 chunk 到达后，往 buffer 里追加文本
+- **消费者**：一个定时器（`setInterval` 或 `requestAnimationFrame`）以固定频率从 buffer 中取出少量字符，更新到界面
+
+这样不管网络推送多快多慢，用户看到的始终是**匀速、流畅的打字效果**。
+
+### React 实现
+
+```jsx
+import { useState, useRef, useCallback } from 'react';
+
+function useTypewriterStream() {
+  const [messages, setMessages] = useState([]);
+  const [streaming, setStreaming] = useState(false);
+
+  const streamBufferRef = useRef('');
+  const streamEndedRef = useRef(false);
+  const timerRef = useRef(null);
+
+  const TICK_MS = 24;        // 每 24ms 消费一次（约 42fps）
+  const CHARS_PER_TICK = 2;  // 每次取 2 个字符
+
+  const startTypewriter = useCallback(() => {
+    timerRef.current = setInterval(() => {
+      const buf = streamBufferRef.current;
+
+      if (buf.length === 0) {
+        // buffer 空了，检查流是否已结束
+        if (streamEndedRef.current) {
+          clearInterval(timerRef.current);
+          timerRef.current = null;
+          setStreaming(false);
+        }
+        return;
+      }
+
+      // 从 buffer 中取出固定数量的字符
+      const take = Math.min(CHARS_PER_TICK, buf.length);
+      const chars = buf.slice(0, take);
+      streamBufferRef.current = buf.slice(take);
+
+      // 更新最后一条 assistant 消息
+      setMessages(prev => {
+        const next = [...prev];
+        const last = next[next.length - 1];
+        if (last?.role === 'assistant') {
+          next[next.length - 1] = { ...last, content: last.content + chars };
+        }
+        return next;
+      });
+    }, TICK_MS);
+  }, []);
+
+  const sendMessage = useCallback(async (userInput) => {
+    const userMsg = { role: 'user', content: userInput };
+    setMessages(prev => [...prev, userMsg, { role: 'assistant', content: '' }]);
+    setStreaming(true);
+
+    // 重置 buffer 状态
+    streamBufferRef.current = '';
+    streamEndedRef.current = false;
+    startTypewriter();
+
+    const response = await fetch('/api/chat', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ messages: [...messages, userMsg] }),
+    });
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() ?? '';
+
+      for (const line of lines) {
+        if (!line.trim()) continue;
+        try {
+          const data = JSON.parse(line.trim());
+          if (data.content) {
+            // 生产者：往 buffer 追加，不直接更新 UI
+            streamBufferRef.current += data.content;
+          }
+        } catch {}
+      }
+    }
+
+    // 标记流结束，typewriter 会在 buffer 消费完后自动停止
+    streamEndedRef.current = true;
+  }, [messages, startTypewriter]);
+
+  return { messages, streaming, sendMessage };
+}
+```
+
+### 关键参数调优
+
+| 参数 | 推荐值 | 效果 |
+|------|-------|------|
+| `TICK_MS` | 16-30ms | 越小越快，16ms ≈ 60fps，24ms 更均匀 |
+| `CHARS_PER_TICK` | 1-3 | 1 个字最像手打，2-3 个更快但仍流畅 |
+
+你可以根据场景调整：
+
+- **正式聊天界面**：`TICK_MS=24, CHARS_PER_TICK=2`（稳定流畅）
+- **代码生成场景**：`TICK_MS=16, CHARS_PER_TICK=5`（代码输出量大，需要更快）
+- **打字机感最强**：`TICK_MS=40, CHARS_PER_TICK=1`（慢速逐字，像真人在打字）
+
+### 用 requestAnimationFrame 替代 setInterval
+
+如果你追求更流畅的渲染，可以用 `requestAnimationFrame`（RAF）替代 `setInterval`：
+
+```javascript
+const startTypewriterRAF = () => {
+  let lastTime = 0;
+
+  const tick = (currentTime) => {
+    if (currentTime - lastTime < TICK_MS) {
+      rafIdRef.current = requestAnimationFrame(tick);
+      return;
+    }
+    lastTime = currentTime;
+
+    const buf = streamBufferRef.current;
+    if (buf.length === 0) {
+      if (streamEndedRef.current) {
+        setStreaming(false);
+        return; // 不再调度下一帧
+      }
+      rafIdRef.current = requestAnimationFrame(tick);
+      return;
+    }
+
+    const take = Math.min(CHARS_PER_TICK, buf.length);
+    const chars = buf.slice(0, take);
+    streamBufferRef.current = buf.slice(take);
+
+    setMessages(prev => {
+      const next = [...prev];
+      const last = next[next.length - 1];
+      if (last?.role === 'assistant') {
+        next[next.length - 1] = { ...last, content: last.content + chars };
+      }
+      return next;
+    });
+
+    rafIdRef.current = requestAnimationFrame(tick);
+  };
+
+  rafIdRef.current = requestAnimationFrame(tick);
+};
+```
+
+RAF 的优势：
+- **和浏览器刷新频率同步**，不会出现 setInterval 的掉帧问题
+- **页面不可见时自动暂停**，节省性能
+- **与渲染管线对齐**，避免不必要的中间帧
+
+### 为什么不直接每个 token 更新 UI？
+
+对比一下两种方案的效果：
+
+| 方案 | 直接更新 | Typewriter Buffer |
+|------|---------|-------------------|
+| 流畅度 | 忽快忽慢，像"结巴" | 匀速流畅，像打字机 |
+| 渲染频率 | 取决于网络，可能每秒 200+ 次 | 固定 ~42 次/秒 |
+| 性能 | 高频 setState 可能卡顿 | 可控，不会压垮 React |
+| 网络突发 | 一下蹦出一大段 | 均匀释放，无跳跃 |
+| 网络卡顿 | UI 也跟着卡 | buffer 有余量，UI 继续流畅 |
+
+在我自己的项目中实测，Typewriter Buffer 模式的用户满意度明显更高——大家会觉得"AI 回复很稳"。
+
+---
+
 ## 常见坑和解决方案
 
 ### 1. SSE 行被截断
@@ -667,7 +860,7 @@ function onContent(content) {
 
 ---
 
-> **下一篇预告**：06 | Prompt 工程：前端最容易忽略的核心技能（即将发布）
+> **下一篇**：[06 | Prompt 工程：前端最容易忽略的核心技能](/series/junior/06-prompt-engineering)
 
 ---
 

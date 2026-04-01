@@ -10,7 +10,7 @@ tags: ["Streaming", "SSE", "WebSocket", "架构设计"]
 # AI Streaming 架构：从浏览器到服务端的全链路流式设计
 
 > 本文是【高级前端的 AI 架构升级之路】系列第 05 篇。
-> 上一篇：[AI 应用的状态管理：比 Redux 复杂 10 倍的挑战](/series/senior/04-ai-state-management) | 下一篇：从单 Chat 到多 Agent 系统（即将发布）
+> 上一篇：[AI 应用的状态管理：比 Redux 复杂 10 倍的挑战](/series/senior/04-ai-state-management) | 下一篇：[从单 Chat 到多 Agent 系统：AI 应用的架构演进路线](/series/senior/06-multi-agent)
 
 ---
 
@@ -635,7 +635,7 @@ location /api/chat/stream {
 
 ---
 
-> **下一篇预告**：06 | 从单 Chat 到多 Agent 系统：AI 应用的架构演进路线（即将发布）
+> **下一篇预告**：[06 | 从单 Chat 到多 Agent 系统：AI 应用的架构演进路线](/series/senior/06-multi-agent)
 
 ---
 
